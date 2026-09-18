@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kiadáskövető</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 560px; margin: 40px auto; padding: 0 16px; color: #222; }
+  h1 { font-size: 1.4rem; }
+  form { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+  input[name="amount"] { width: 100px; }
+  input[name="category"] { width: 140px; }
+  input[name="note"] { flex: 1; min-width: 120px; }
+  button { padding: 8px 16px; border: none; border-radius: 6px; background: #2563eb; color: white; cursor: pointer; }
+  button:hover { background: #1d4ed8; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  td, th { text-align: left; padding: 6px 4px; border-bottom: 1px solid #eee; }
+  #summary { background: #f5f5f7; padding: 12px 16px; border-radius: 8px; }
+  #summary div { display: flex; justify-content: space-between; padding: 2px 0; }
+</style>
+</head>
+<body>
+  <h1>💸 Kiadáskövető</h1>
+
+  <form id="add-form">
+    <input name="amount" type="number" step="0.01" placeholder="Összeg (Ft)" required>
+    <input name="category" type="text" placeholder="Kategória" required>
+    <input name="note" type="text" placeholder="Megjegyzés">
+    <button type="submit">Hozzáad</button>
+  </form>
+
+  <table>
+    <thead><tr><th>Dátum</th><th>Összeg</th><th>Kategória</th><th>Megjegyzés</th></tr></thead>
+    <tbody id="expense-rows"></tbody>
+  </table>
+
+  <div id="summary"></div>
+
+<script>
+async function loadExpenses() {
+  const res = await fetch('/api/expenses');
+  const expenses = await res.json();
+  const rows = document.getElementById('expense-rows');
+  rows.innerHTML = expenses.map(e => `
+    <tr>
+      <td>${e.date}</td>
+      <td>${e.amount.toFixed(2)} Ft</td>
+      <td>${e.category}</td>
+      <td>${e.note || ''}</td>
+    </tr>
+  `).join('');
+}
+
+async function loadSummary() {
+  const res = await fetch('/api/summary');
+  const totals = await res.json();
+  const el = document.getElementById('summary');
+  const total = Object.values(totals).reduce((a, b) => a + b, 0);
+  el.innerHTML = Object.entries(totals)
+    .map(([cat, sum]) => `<div><span>${cat}</span><span>${sum.toFixed(2)} Ft</span></div>`)
+    .join('') + `<div><strong>Összesen</strong><strong>${total.toFixed(2)} Ft</strong></div>`;
+}
+
+document.getElementById('add-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const body = {
+    amount: form.amount.value,
+    category: form.category.value,
+    note: form.note.value,
+  };
+  await fetch('/api/expenses', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  form.reset();
+  loadExpenses();
+  loadSummary();
+});
+
+loadExpenses();
+loadSummary();
+</script>
+</body>
+</html>

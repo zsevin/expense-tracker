@@ -1,37 +1,10 @@
 import argparse
-import json
-import os
 import sys
-from datetime import date
+
+from storage import load_expenses, add_expense, compute_summary
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
-
-DATA_FILE = os.path.join(os.path.dirname(__file__), "expenses.json")
-
-
-def load_expenses():
-    if not os.path.exists(DATA_FILE):
-        return []
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def save_expenses(expenses):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(expenses, f, indent=2, ensure_ascii=False)
-
-
-def add_expense(amount, category, note):
-    expenses = load_expenses()
-    expenses.append({
-        "date": date.today().isoformat(),
-        "amount": amount,
-        "category": category,
-        "note": note,
-    })
-    save_expenses(expenses)
-    print(f"Hozzáadva: {amount} Ft ({category})")
 
 
 def list_expenses():
@@ -49,9 +22,7 @@ def show_summary():
     if not expenses:
         print("Még nincs egy rögzített kiadás sem.")
         return
-    totals = {}
-    for e in expenses:
-        totals[e["category"]] = totals.get(e["category"], 0) + e["amount"]
+    totals = compute_summary(expenses)
     print("Összesítés kategóriánként:")
     for category, total in sorted(totals.items(), key=lambda x: -x[1]):
         print(f"  {category:<15} {total:>10.2f} Ft")
@@ -74,6 +45,7 @@ def main():
 
     if args.command == "add":
         add_expense(args.amount, args.category, args.note)
+        print(f"Hozzáadva: {args.amount} Ft ({args.category})")
     elif args.command == "list":
         list_expenses()
     elif args.command == "summary":
