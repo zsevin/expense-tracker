@@ -25,7 +25,16 @@
 
   <form id="add-form">
     <input name="amount" type="number" step="0.01" placeholder="Összeg (Ft)" required>
-    <input name="category" type="text" placeholder="Kategória" required>
+    <input name="category" type="text" list="category-list" placeholder="Kategória" required>
+    <datalist id="category-list">
+      <option value="Étel">
+      <option value="Közlekedés">
+      <option value="Lakhatás">
+      <option value="Szórakozás">
+      <option value="Egészség">
+      <option value="Ruházat">
+      <option value="Egyéb">
+    </datalist>
     <input name="note" type="text" placeholder="Megjegyzés">
     <button type="submit">Hozzáad</button>
   </form>
