@@ -1,8 +1,16 @@
 import json
 import os
+import tempfile
 from datetime import date
 
-DATA_FILE = os.path.join(os.path.dirname(__file__), "expenses.json")
+# Vercel serverless functions have a read-only filesystem except /tmp,
+# and /tmp is not shared or persisted across invocations. Until we add
+# a real database (step 5), fall back to /tmp there so the demo doesn't
+# crash on write — data just won't persist between requests in prod.
+if os.environ.get("VERCEL"):
+    DATA_FILE = os.path.join(tempfile.gettempdir(), "expenses.json")
+else:
+    DATA_FILE = os.path.join(os.path.dirname(__file__), "expenses.json")
 
 
 def load_expenses():
